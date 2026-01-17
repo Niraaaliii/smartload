@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Custom ###
+docs/
+*.pdf
+.DS_Store
+*.log
