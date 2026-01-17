@@ -1,5 +1,6 @@
 package com.teleport.smartload.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 
@@ -9,9 +10,11 @@ public class Truck {
     private String id;
 
     @Positive(message = "Max weight must be positive")
+    @JsonProperty("max_weight_lbs")
     private int maxWeightLbs;
 
     @Positive(message = "Max volume must be positive")
+    @JsonProperty("max_volume_cuft")
     private int maxVolumeCuft;
 
     public Truck() {

@@ -1,5 +1,6 @@
 package com.teleport.smartload.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -12,12 +13,15 @@ public class Order {
     private String id;
 
     @PositiveOrZero(message = "Payout must be non-negative")
+    @JsonProperty("payout_cents")
     private long payoutCents;
 
     @Positive(message = "Weight must be positive")
+    @JsonProperty("weight_lbs")
     private int weightLbs;
 
     @Positive(message = "Volume must be positive")
+    @JsonProperty("volume_cuft")
     private int volumeCuft;
 
     @NotBlank(message = "Origin is required")
@@ -27,11 +31,14 @@ public class Order {
     private String destination;
 
     @NotNull(message = "Pickup date is required")
+    @JsonProperty("pickup_date")
     private LocalDate pickupDate;
 
     @NotNull(message = "Delivery date is required")
+    @JsonProperty("delivery_date")
     private LocalDate deliveryDate;
 
+    @JsonProperty("is_hazmat")
     private boolean isHazmat;
 
     public Order() {
