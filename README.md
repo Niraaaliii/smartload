@@ -1,28 +1,31 @@
 # SmartLoad Optimization API
 
-A simple REST API that figures out the best combination of orders for a truck to maximize profit.
+A REST API that determines the optimal combination of orders for a truck to maximize profit while violating no constraints.
 
-## Quick Start
+## 🚀 Quick Start
+
+### Run with Docker
 
 ```bash
-git clone <your-repo>
-cd smartload
 docker compose up --build
 ```
 
-The service runs on `http://localhost:8080`
+The service will be available at `http://localhost:8080`.
 
-## Check if it's running
+### Check Health
 
 ```bash
 curl http://localhost:8080/actuator/health
+# Output: {"status":"UP"}
 ```
 
-## How to use
+---
 
-### POST /api/v1/load-optimizer/optimize
+## 🛠 Usage
 
-Send a truck and a list of orders, get back the optimal combination.
+**Endpoint:** `POST /api/v1/load-optimizer/optimize`
+
+**Example Request:**
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/load-optimizer/optimize \
@@ -44,16 +47,18 @@ curl -X POST http://localhost:8080/api/v1/load-optimizer/optimize \
 }
 ```
 
-## What it checks
+---
 
-- **Weight & Volume** - won't exceed truck limits
-- **Same Route** - all orders must go to the same destination
-- **Hazmat Rules** - no mixing hazmat with regular cargo
-- **Valid Dates** - pickup must be before delivery
+## 🧪 Testing
 
-## Built with
+Run unit and performance tests:
 
-- Java 17
-- Spring Boot 4.0
-- Maven
-- Docker
+```bash
+./mvnw test
+```
+
+## ✅ Constraints Handled
+
+- **Capacity**: Weight & Volume limits.
+- **Rules**: Hazmat isolation & Route compatibility.
+- **Timing**: Pickup must be before delivery.
