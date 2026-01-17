@@ -7,13 +7,19 @@ import com.teleport.smartload.model.Truck;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
 public class LoadOptimizerServiceImpl implements LoadOptimizerService {
 
-    private long bestPayout;
-    private List<Order> bestCombination;
+    /**
+     * Thread-safe holder for tracking best result during backtracking
+     */
+    private static class Result {
+        long bestPayout = 0;
+        List<Order> bestCombination = new ArrayList<>();
+    }
 
     @Override
     public OptimizeResponse optimize(OptimizeRequest request) {
@@ -30,12 +36,20 @@ public class LoadOptimizerServiceImpl implements LoadOptimizerService {
             return buildResponse(truck, new ArrayList<>());
         }
 
-        bestPayout = 0;
-        bestCombination = new ArrayList<>();
+        // Sort by payout density (payout per unit of capacity used) for better pruning
+        validOrders.sort(Comparator.comparingDouble(
+                o -> -((double) o.getPayoutCents() / (o.getWeightLbs() + o.getVolumeCuft()))));
 
-        backtrack(validOrders, truck, 0, new ArrayList<>(), 0, 0, 0);
+        // Precompute suffix sums for pruning - max possible payout from index i onwards
+        long[] suffixPayouts = new long[validOrders.size() + 1];
+        for (int i = validOrders.size() - 1; i >= 0; i--) {
+            suffixPayouts[i] = suffixPayouts[i + 1] + validOrders.get(i).getPayoutCents();
+        }
 
-        return buildResponse(truck, bestCombination);
+        Result result = new Result();
+        backtrack(validOrders, truck, 0, new ArrayList<>(), 0, 0, 0, result, suffixPayouts);
+
+        return buildResponse(truck, result.bestCombination);
     }
 
     /**
@@ -60,19 +74,25 @@ public class LoadOptimizerServiceImpl implements LoadOptimizerService {
     }
 
     /**
-     * Uses backtracking to try all combinations and find the one with max payout
+     * Uses backtracking with pruning to find the combination with max payout
      */
     private void backtrack(List<Order> orders, Truck truck, int index,
             List<Order> current, long currentPayout,
-            int currentWeight, int currentVolume) {
+            int currentWeight, int currentVolume,
+            Result result, long[] suffixPayouts) {
 
         // found a better combo? save it
-        if (currentPayout > bestPayout) {
-            bestPayout = currentPayout;
-            bestCombination = new ArrayList<>(current);
+        if (currentPayout > result.bestPayout) {
+            result.bestPayout = currentPayout;
+            result.bestCombination = new ArrayList<>(current);
         }
 
         if (index >= orders.size()) {
+            return;
+        }
+
+        // Pruning: if current + all remaining can't beat best, skip this branch
+        if (currentPayout + suffixPayouts[index] <= result.bestPayout) {
             return;
         }
 
@@ -94,7 +114,8 @@ public class LoadOptimizerServiceImpl implements LoadOptimizerService {
 
             current.add(order);
             backtrack(orders, truck, i + 1, current,
-                    currentPayout + order.getPayoutCents(), newWeight, newVolume);
+                    currentPayout + order.getPayoutCents(), newWeight, newVolume,
+                    result, suffixPayouts);
             current.remove(current.size() - 1);
         }
     }
